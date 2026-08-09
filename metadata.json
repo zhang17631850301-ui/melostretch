@@ -1,0 +1,6 @@
+{
+  "name": "MeloStretch",
+  "description": "面向办公室久坐人群的肌肉舒缓助手 — 身体地图、劳损原因排查与动作练习",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
