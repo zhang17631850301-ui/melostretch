@@ -21,6 +21,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState('');
   const uploadTimer = useRef<number | null>(null);
+  const lastSyncedUserId = useRef<string | null>(null);
 
   const runSync = async (targetUser: User) => {
     setSyncing(true);
@@ -35,21 +36,67 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      const currentUser = data.session?.user || null;
-      setUser(currentUser);
-      setLoading(false);
-      if (currentUser) void runSync(currentUser);
-    });
+    supabase.auth.getSession()
+      .then(({ data, error }) => {
+        if (error) throw error;
+        const currentUser = data.session?.user || null;
+        setUser(currentUser);
+        if (currentUser && lastSyncedUserId.current !== currentUser.id) {
+          lastSyncedUserId.current = currentUser.id;
+          void runSync(currentUser);
+        }
+      })
+      .catch((error: any) => setSyncError(error?.message || '登录状态读取失败，请刷新重试'))
+      .finally(() => setLoading(false));
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       const nextUser = session?.user || null;
       setUser(nextUser);
       setLoading(false);
-      if (nextUser) window.setTimeout(() => void runSync(nextUser), 0);
+      if (!nextUser) lastSyncedUserId.current = null;
+      if (nextUser && lastSyncedUserId.current !== nextUser.id) {
+        lastSyncedUserId.current = nextUser.id;
+        window.setTimeout(() => void runSync(nextUser), 0);
+      }
+
+      const callbackUrl = new URL(window.location.href);
+      if (callbackUrl.searchParams.has('code') || callbackUrl.searchParams.has('error')) {
+        callbackUrl.searchParams.delete('code');
+        callbackUrl.searchParams.delete('error');
+        callbackUrl.searchParams.delete('error_code');
+        callbackUrl.searchParams.delete('error_description');
+        window.history.replaceState({}, document.title, `${callbackUrl.pathname}${callbackUrl.search}${callbackUrl.hash}`);
+      }
     });
 
     return () => listener.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const refreshSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        setSyncError(error.message || '登录状态读取失败，请刷新重试');
+        return;
+      }
+      const nextUser = data.session?.user || null;
+      setUser(nextUser);
+      if (nextUser && lastSyncedUserId.current !== nextUser.id) {
+        lastSyncedUserId.current = nextUser.id;
+        void runSync(nextUser);
+      }
+    };
+
+    const handleFocus = () => void refreshSession();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') void refreshSession();
+    };
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
 
   useEffect(() => {
