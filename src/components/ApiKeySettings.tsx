@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Check, Eye, EyeOff, KeyRound, Settings, Trash2, X } from 'lucide-react';
 import {
   clearGeminiApiKey,
@@ -17,6 +17,15 @@ export const ApiKeySettings: React.FC = () => {
   const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
   const isConfigured = Boolean(getGeminiApiKey());
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsOpen(false);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [isOpen]);
 
   const handleSave = () => {
     if (!apiKey.trim()) return;
@@ -49,6 +58,9 @@ export const ApiKeySettings: React.FC = () => {
 
       {isOpen && (
         <div className="fixed inset-0 z-[100] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setIsOpen(false)}>
+          <button onClick={() => setIsOpen(false)} className="fixed right-4 top-4 z-[120] inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-xl ring-1 ring-slate-200 hover:bg-slate-100" aria-label="关闭 API 设置">
+            <X className="h-4 w-4" /> 关闭
+          </button>
           <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-emerald-100 p-6" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4 mb-5">
               <div className="flex items-center gap-3">
