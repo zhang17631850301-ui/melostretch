@@ -23,12 +23,25 @@ function readJson<T>(key: string, fallback: T): T {
   }
 }
 
+function normalizeSnapshot(value: Partial<UserDataSnapshot> | null | undefined): UserDataSnapshot {
+  const favorites = Array.isArray(value?.favorites)
+    ? value.favorites.filter((item): item is string => typeof item === 'string')
+    : [];
+  const logs = Array.isArray(value?.logs)
+    ? value.logs.filter((item): item is UserLog => Boolean(item && typeof item === 'object' && typeof item.id === 'string'))
+    : [];
+  const aiExercises = Array.isArray(value?.aiExercises)
+    ? value.aiExercises.filter((item): item is Exercise => Boolean(item && typeof item === 'object' && typeof item.id === 'string'))
+    : [];
+  return { favorites, logs, aiExercises };
+}
+
 export function getLocalSnapshot(): UserDataSnapshot {
-  return {
+  return normalizeSnapshot({
     favorites: readJson<string[]>(KEYS.favorites, DEFAULT_FAVORITES),
     logs: readJson<UserLog[]>(KEYS.logs, []),
     aiExercises: readJson<Exercise[]>(KEYS.aiExercises, []),
-  };
+  });
 }
 
 function uniqueById<T extends { id: string }>(cloud: T[], local: T[]): T[] {
@@ -75,13 +88,13 @@ export async function syncAfterLogin(userId: string): Promise<void> {
 
   if (error) throw error;
 
-  const cloud: UserDataSnapshot = data
+  const cloud = normalizeSnapshot(data
     ? {
         favorites: Array.isArray(data.favorites) ? data.favorites : [],
         logs: Array.isArray(data.logs) ? data.logs : [],
         aiExercises: Array.isArray(data.ai_exercises) ? data.ai_exercises : [],
       }
-    : { favorites: [], logs: [], aiExercises: [] };
+    : { favorites: [], logs: [], aiExercises: [] });
 
   if (data && hasMigratedOnThisDevice) {
     applySnapshot(cloud);
