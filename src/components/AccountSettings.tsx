@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Check, Cloud, Loader2, LogIn, LogOut, RefreshCw, X } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 
@@ -9,6 +9,15 @@ export const AccountSettings: React.FC = () => {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsOpen(false);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [isOpen]);
 
   const handleSend = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -39,15 +48,19 @@ export const AccountSettings: React.FC = () => {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className={`p-2.5 rounded-xl border transition-all relative ${user ? 'bg-sky-50 text-sky-700 border-sky-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
+        className={`min-h-10 px-3.5 py-2 rounded-xl border transition-all relative inline-flex items-center gap-2 text-sm font-bold shadow-sm ${user ? 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100' : 'bg-white text-slate-700 border-slate-300 hover:border-sky-300 hover:text-sky-700'}`}
         title={user ? `已登录：${user.email}` : '登录并跨设备同步'}
       >
         {loading || syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : user ? <Cloud className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
+        <span>{loading ? '检查登录' : syncing ? '同步中' : user ? '已同步' : '登录同步'}</span>
         {user && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-white bg-sky-500" />}
       </button>
 
       {isOpen && (
         <div className="fixed inset-0 z-[110] bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setIsOpen(false)}>
+          <button onClick={() => setIsOpen(false)} className="fixed right-4 top-4 z-[120] inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-xl ring-1 ring-slate-200 hover:bg-slate-100" aria-label="关闭账号设置">
+            <X className="h-4 w-4" /> 关闭
+          </button>
           <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-sky-100 p-6" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4 mb-5">
               <div>
