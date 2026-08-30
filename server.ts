@@ -4,6 +4,8 @@ import { GoogleGenAI, Type } from "@google/genai";
 
 const app = express();
 const PORT = 3000;
+const ALLOWED_GEMINI_MODELS = new Set(["gemini-3.1-flash-lite", "gemini-3.6-flash"]);
+const DEFAULT_GEMINI_MODEL = "gemini-3.1-flash-lite";
 
 app.use(express.json());
 
@@ -17,6 +19,13 @@ function getAiClient(req: express.Request): GoogleGenAI {
     apiKey: headerValue,
     httpOptions: { headers: { "User-Agent": "melostretch-byok" } },
   });
+}
+
+function getGeminiModel(req: express.Request): string {
+  const requestedModel = req.header("X-Gemini-Model")?.trim();
+  return requestedModel && ALLOWED_GEMINI_MODELS.has(requestedModel)
+    ? requestedModel
+    : DEFAULT_GEMINI_MODEL;
 }
 
 // Health check route
@@ -44,7 +53,7 @@ app.post("/api/ai/generate-exercises", async (req, res) => {
 4. 难度标注为 "轻松"、"初级" 或 "进阶"。`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: getGeminiModel(req),
       contents: prompt,
       config: {
         systemInstruction: "你是一个专业的肌肉康复与动作指导AI助手。请输出规范的JSON格式数组。",
@@ -137,7 +146,7 @@ app.post("/api/ai/search-pain", async (req, res) => {
 `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: getGeminiModel(req),
       contents: prompt,
       config: {
         systemInstruction: "你是一个专业的肌肉康复与身体不适排查AI助手。请严格输出结构化JSON对象。",

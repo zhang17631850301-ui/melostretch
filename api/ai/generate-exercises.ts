@@ -1,11 +1,16 @@
 import { GoogleGenAI, Type } from '@google/genai';
 
+const ALLOWED_MODELS = new Set(['gemini-3.1-flash-lite', 'gemini-3.6-flash']);
+const DEFAULT_MODEL = 'gemini-3.1-flash-lite';
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
     const apiKey = String(req.headers['x-gemini-api-key'] || '').trim();
     if (!apiKey) return res.status(400).json({ error: '请先点击页面右上角的设置按钮，配置你自己的 Gemini API Key' });
+    const requestedModel = String(req.headers['x-gemini-model'] || '').trim();
+    const model = ALLOWED_MODELS.has(requestedModel) ? requestedModel : DEFAULT_MODEL;
 
     const { muscleName, muscleId, categoryName, userPreference } = req.body || {};
     if (!muscleName) return res.status(400).json({ error: 'Muscle name is required' });
@@ -21,7 +26,7 @@ export default async function handler(req: any, res: any) {
 4. 难度标注为“轻松”“初级”或“进阶”。`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
+      model,
       contents: prompt,
       config: {
         systemInstruction: '你是专业的肌肉康复与动作指导AI助手。请输出规范的JSON格式数组。',
@@ -83,4 +88,3 @@ export default async function handler(req: any, res: any) {
     });
   }
 }
-

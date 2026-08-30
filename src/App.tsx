@@ -30,10 +30,20 @@ export default function App() {
 
   // Load user data on mount
   useEffect(() => {
-    setFavorites(getFavorites());
-    setLogs(getUserLogs());
-    setStats(getUserStats());
-    setAiExercises(getAiExercises());
+    const refreshFromStorage = () => {
+      setFavorites(getFavorites());
+      setLogs(getUserLogs());
+      setStats(getUserStats());
+      setAiExercises(getAiExercises());
+    };
+
+    refreshFromStorage();
+    window.addEventListener('melostretch:data-changed', refreshFromStorage);
+    window.addEventListener('melostretch:local-data-changed', refreshFromStorage);
+    return () => {
+      window.removeEventListener('melostretch:data-changed', refreshFromStorage);
+      window.removeEventListener('melostretch:local-data-changed', refreshFromStorage);
+    };
   }, []);
 
   const allExercises = [...EXERCISES_DATABASE, ...aiExercises];

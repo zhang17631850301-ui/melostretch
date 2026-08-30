@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
 import { Check, Eye, EyeOff, KeyRound, Settings, Trash2, X } from 'lucide-react';
-import { clearGeminiApiKey, getGeminiApiKey, saveGeminiApiKey } from '../utils/geminiKey';
+import {
+  clearGeminiApiKey,
+  GEMINI_MODELS,
+  GeminiModelId,
+  getGeminiApiKey,
+  getGeminiModel,
+  saveGeminiApiKey,
+  saveGeminiModel,
+} from '../utils/geminiKey';
 
 export const ApiKeySettings: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [apiKey, setApiKey] = useState(() => getGeminiApiKey());
+  const [model, setModel] = useState<GeminiModelId>(() => getGeminiModel());
   const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
   const isConfigured = Boolean(getGeminiApiKey());
@@ -12,6 +21,7 @@ export const ApiKeySettings: React.FC = () => {
   const handleSave = () => {
     if (!apiKey.trim()) return;
     saveGeminiApiKey(apiKey);
+    saveGeminiModel(model);
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1800);
   };
@@ -77,6 +87,23 @@ export const ApiKeySettings: React.FC = () => {
             <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noreferrer" className="inline-block mt-2 text-xs font-bold text-emerald-700 hover:underline">
               没有 Key？前往 Google AI Studio 免费申请 ↗
             </a>
+
+            <div className="mt-5">
+              <label className="text-xs font-bold text-gray-700" htmlFor="gemini-model">调用模型</label>
+              <select
+                id="gemini-model"
+                value={model}
+                onChange={(event) => setModel(event.target.value as GeminiModelId)}
+                className="mt-2 w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+              >
+                {GEMINI_MODELS.map((option) => (
+                  <option key={option.id} value={option.id}>{option.name}</option>
+                ))}
+              </select>
+              <p className="mt-2 text-xs leading-relaxed text-gray-500">
+                {GEMINI_MODELS.find((option) => option.id === model)?.description}
+              </p>
+            </div>
 
             <div className="flex items-center gap-2 mt-5">
               <button onClick={handleSave} disabled={!apiKey.trim()} className="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white text-sm font-bold flex items-center justify-center gap-2">

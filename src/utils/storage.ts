@@ -7,6 +7,10 @@ const STORAGE_KEYS = {
   AI_EXERCISES: 'melostretch_ai_exercises',
 };
 
+function notifyLocalDataChanged(): void {
+  window.dispatchEvent(new Event('melostretch:local-data-changed'));
+}
+
 /**
  * Returns local YYYY-MM-DD date string instead of UTC to avoid timezone shift bugs
  */
@@ -33,6 +37,7 @@ export function saveAiExercisesBatch(newExercises: import('../types').Exercise[]
   const updated = [...existing, ...toAdd];
   try {
     localStorage.setItem(STORAGE_KEYS.AI_EXERCISES, JSON.stringify(updated));
+    notifyLocalDataChanged();
   } catch {
     // ignore
   }
@@ -59,6 +64,7 @@ export function toggleFavorite(exerciseId: string): string[] {
   }
   try {
     localStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(updated));
+    notifyLocalDataChanged();
   } catch {
     // ignore
   }
@@ -153,6 +159,7 @@ export function saveUserLog(log: Omit<UserLog, 'id' | 'timestamp' | 'dateStr'> &
   const updatedLogs = [newLog, ...logs];
   try {
     localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(updatedLogs));
+    notifyLocalDataChanged();
   } catch {
     // ignore
   }
@@ -166,6 +173,7 @@ export function deleteUserLog(logId: string): UserLog[] {
   const updatedLogs = currentLogs.filter(l => l.id !== logId);
   try {
     localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(updatedLogs));
+    notifyLocalDataChanged();
   } catch {
     // ignore
   }

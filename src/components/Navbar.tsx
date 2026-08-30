@@ -1,6 +1,7 @@
 import React from 'react';
 import { Map, Layers, Calendar, Home, Sparkles, Clock } from 'lucide-react';
 import { ApiKeySettings } from './ApiKeySettings';
+import { AccountSettings } from './AccountSettings';
 
 export type TabType = 'home' | 'bodymap' | 'solutions' | 'plan';
 
@@ -79,6 +80,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right CTA Button */}
         <div className="flex items-center gap-2">
+          <AccountSettings />
           <ApiKeySettings />
           <button
             onClick={onQuick3Min}

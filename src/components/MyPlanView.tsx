@@ -189,12 +189,14 @@ export const MyPlanView: React.FC<MyPlanViewProps> = ({
 
     // Save to local storage
     localStorage.setItem('melostretch_favorites', JSON.stringify(newFavs));
+    window.dispatchEvent(new Event('melostretch:local-data-changed'));
     if (onRefreshData) onRefreshData();
   };
 
   const handleResetDefaultPlan = () => {
     const defaults = ['ex_neck_side', 'ex_seated_figure_4', 'ex_seated_twist', 'ex_wrist_stretch'];
     localStorage.setItem('melostretch_favorites', JSON.stringify(defaults));
+    window.dispatchEvent(new Event('melostretch:local-data-changed'));
     if (onRefreshData) onRefreshData();
   };
 
